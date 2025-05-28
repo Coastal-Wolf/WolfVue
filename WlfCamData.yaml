@@ -1,0 +1,17 @@
+path: C:\Users\Coastal_wolf\Documents\GitHub\TrailCamAi\Datasets
+train: images
+val: images
+labels: labels
+
+nc: 10
+names:
+  0: "WhiteTail"
+  1: "MuleDeer"
+  2: "Elk"
+  3: "Moose"
+  4: "Cougar"
+  5: "Lynx"
+  6: "Wolf"
+  7: "Coyote"
+  8: "Fox"
+  9: "Bear"
