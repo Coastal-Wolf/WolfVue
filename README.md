@@ -8,32 +8,79 @@ A tool for automatically classifying trail camera videos using YOLO object detec
 
 Python 3.8 or higher installed on your system.
 
-### Installation
+Note: this script has only been tested on windows 11.
 
-Install the required packages:
-(you can do this in CMD)
-```bash
-pip install ultralytics opencv-python pyyaml tqdm colorama
-```
+# WolfVue: Wildlife Video Classifier
 
-### Basic Usage
+A tool for automatically classifying trail camera videos using YOLO object detection, originally developed for The Gray Wolf Research Project.
 
+## Download & Setup
 
-1. Place your videos in the `input_videos/` folder
-2. Run the script (using CMD):
+**Step 1: Download WolfVue**
+1. Click the green "Code" button at the top of this GitHub page
+2. Select "Download ZIP"
+3. Extract the ZIP file to your Desktop or Documents folder
+4. Open the extracted folder - it should contain `wolfvue.py`, `best.pt`, and folders named `input_videos/` and `output_videos/`
 
-```bash
-python wolfvue.py
-```
-The script will give you prompts to change the filepath of any core components (if you wanted to test a new model fine-tune for example)
-If you dont have anything youd like to edit, press enter after each prompt. it should already be pre-configured for windows systems.
+**Step 2: Install Python**
+1. Download Python 3.8+ from [python.org](https://python.org)
+2. During installation, CHECK "Add Python to PATH" (important!)
+3. Restart your computer
 
-The script will process all videos and sort them into the `output_videos/` folder based on detected species.
+**Step 3: Install Required Packages**
+1. Open Command Prompt (Windows) or Terminal (Mac/Linux)
+2. Navigate to your WolfVue folder:
+   ```
+   cd Desktop/WolfVue
+   ```
+3. Install packages:
+   ```
+   pip install ultralytics opencv-python pyyaml tqdm colorama
+   ```
 
-youll see lots of lines of frame detection zooming down your screen, that means its running. Depending on your system and your videos, this could take time. 
+## Using WolfVue
 
-When the videos are finished processing, you should see text giving you a brief summary of identifications, and a file in your output folder with a more detailed classification report.
+**Step 4: Add Your Videos**
+- Copy your trail camera videos into the `input_videos/` folder
+- Supported formats: .mp4, .avi, .mov, .mkv
 
+**Step 5: Run the Script**
+1. Open Command Prompt/Terminal and navigate to your WolfVue folder
+2. Run:
+   ```
+   python wolfvue.py
+   ```
+3. Press Enter for each prompt (unless you want to change file paths)
+4. Wait for processing to complete - you'll see lots of scrolling text showing frame detection
+
+**Step 6: Check Results**
+Find your sorted videos in:
+- `output_videos/Sorted/` - organized by species
+- `output_videos/Unsorted/` - mixed species or unclear
+- `output_videos/No_Animal/` - no animals detected
+- `processing_report.txt` - detailed classification report
+
+## Troubleshooting
+
+**"Python is not recognized"**
+- Reinstall Python and check "Add Python to PATH"
+- Restart your computer
+
+**"No module named 'ultralytics'"**
+- Make sure you ran the pip install command in the correct WolfVue folder
+
+**"No videos found"**
+- Check that videos are in the `input_videos/` folder with supported file extensions
+
+**Script crashes**
+- Ensure `best.pt` and `WlfCamData.yaml` are in your WolfVue folder
+
+## Tips
+- Test with 1-2 videos first
+- Processing time varies by computer speed and video length
+- Check the processing report for detailed explanations
+
+Need help? Open an issue on GitHub with your error message and operating system.
 ## How It Works
 
 WolfVue processes trail camera footage frame by frame, detecting animals using a trained YOLO model. It then analyzes the temporal patterns of detections to classify each video into one of three categories:
@@ -216,13 +263,20 @@ The classifier handles several edge cases:
 ### final remarks
 
 I want to preface this by saying most of this was created with AI, the scripting, learning how to train models, etc. While I have a basic understanding of python, I would not have been
-Able to achieve this without Claude, that said, coders who do know what theyre doing will probably encounter some odd quirks in the code because of this, and I apoligize in advance.
+Able to achieve this without Claude, that said, developers will probably encounter some odd quirks in the code because of this, and I apologize in advance.
 
 At first I was conflicted about using AI to code, but ultimately, the means that this is done does not matter so long as the end project benefits scientists. researchers, and hobbiests free of charge as intended.
 
 Also note that I would like this project to be specifically for Trail cameras, so please make sure any data that is fine tuned is done with data FROM trail cameras. 
 
 Thank you for reading, and possibly using this. I think this could make for a great open source project!
+
+## What to improve on for the future
+
+First and foremost, we need to improve the yolo model. Its pretty clear thats the main issue to be worked on.
+
+I think focusing on large and common mammals from North America is important. I think we should catogorize things like birds broadly, as it would be a nightmare to try to identify 
+each species, same with waterfowl. I think we should limit our scope to maybe 20 species at most for now if we get that many. We'll burn that bridge when we get to it i suppose.
 
 ## Contributing
 
