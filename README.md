@@ -50,6 +50,13 @@ A tool for automatically classifying trail camera videos using YOLO object detec
    ```
    python wolfvue.py
    ```
+   if this doesnt work, try clicking on the WolfVue folder, and then click "copy filepath". Then modify the original prompt.
+
+  Example:
+  ```
+  python "C:\Users\Coastal_wolf\Desktop\WolfVue\WolfVue.py"
+  ```
+
 3. Press Enter for each prompt (unless you want to change file paths)
 4. Wait for processing to complete - you'll see lots of scrolling text showing frame detection
 
