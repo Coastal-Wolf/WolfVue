@@ -289,6 +289,10 @@ each species, same with waterfowl. I think we should limit our scope to maybe 20
 
 Im already doing things frame by frame, this should be a no-brainer. It also should be incredibly easy. I just need to make the script recognize when images are input and sort those in the same way.
 
+3. Add documentation for fine-tuning YOLO models
+
+I will do this once ive re-learned how to do this myself.
+
 ## Contributing
 
 When contributing, please maintain the existing code structure and add appropriate error handling for new features. The codebase prioritizes readability and maintainability over premature optimization.
