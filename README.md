@@ -280,10 +280,14 @@ Thank you for reading, and possibly using this. I think this could make for a gr
 
 ## What to improve on for the future
 
-First and foremost, we need to improve the yolo model. Its pretty clear thats the main issue to be worked on.
+1. First and foremost, we need to improve the yolo model. Its pretty clear thats the main issue to be worked on.
 
 I think focusing on large and common mammals from North America is important. I think we should catogorize things like birds broadly, as it would be a nightmare to try to identify 
 each species, same with waterfowl. I think we should limit our scope to maybe 20 species at most for now if we get that many. We'll burn that bridge when we get to it i suppose.
+
+2. Implement support for images.
+
+Im already doing things frame by frame, this should be a no-brainer. It also should be incredibly easy. I just need to make the script recognize when images are input and sort those in the same way.
 
 ## Contributing
 
