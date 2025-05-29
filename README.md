@@ -8,7 +8,7 @@ A tool for automatically classifying trail camera videos using YOLO object detec
 
 Python 3.8 or higher installed on your system.
 
-Note: this script has only been tested on windows 11.
+Note: this script has only been tested on windows 11 and may not operate on Mac/Linux correctly.
 
 # WolfVue: Wildlife Video Classifier
 
