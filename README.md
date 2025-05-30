@@ -291,7 +291,13 @@ Im already doing things frame by frame, this should be a no-brainer. It also sho
 
 3. Add documentation for fine-tuning YOLO models
 
-I will do this once ive re-learned how to do this myself.
+I will do this once ive re-learned how to do this myself
+
+## Potential feature ideas
+
+1. figure out how to do things like automating animal size and color calculations, determine if possible and how to implement.
+
+2. Research a potential option for  image segmentation, might have to use a different model and make it an option, as it will be slower
 
 ## Contributing
 
@@ -303,7 +309,7 @@ Created by Nathan Bluto
 initial data from The Gray Wolf Research Project  
 Facilitated by Dr. Ausband
 
-## lisence
+## License
 
  GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
