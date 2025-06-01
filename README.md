@@ -283,7 +283,7 @@ Thank you for reading, and possibly using this. I think this could make for a gr
 1. First and foremost, we need to improve the yolo model. Its pretty clear thats the main issue to be worked on.
 
 I think focusing on large and common mammals from North America is important. I think we should catogorize things like birds broadly, as it would be a nightmare to try to identify 
-each species, same with waterfowl. I think we should limit our scope to maybe 20 species at most for now if we get that many. We'll burn that bridge when we get to it i suppose.
+each species, same with waterfowl. I think we should limit our scope to maybe 20 species at most for now if we get that many. We'll burn that bridge when we get to it i suppose. (also add more models which can be changed between within the program like a liberary)
 
 2. Implement support for images.
 
@@ -293,11 +293,18 @@ Im already doing things frame by frame, this should be a no-brainer. It also sho
 
 I will do this once ive re-learned how to do this myself
 
+4. 
+potentially underwater?
+
 ## Potential feature ideas
 
 1. figure out how to do things like automating animal size and color calculations, determine if possible and how to implement.
 
 2. Research a potential option for  image segmentation, might have to use a different model and make it an option, as it will be slower
+
+## Training new models
+
+VERY valuable resource for idaho trail cameras: https://lila.science/datasets/idaho-camera-traps/
 
 ## Contributing
 
