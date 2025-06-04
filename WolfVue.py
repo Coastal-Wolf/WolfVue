@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 WolfVue: Wildlife Video Classifier
-Processes trail camera videos using a YOLO model and sorts them into folders
+Processes trail camera videos and images using a YOLO model and sorts them into folders
 based on detected species according to a predefined taxonomy.
 
 Created by Nathan Bluto
@@ -38,11 +38,16 @@ OUTPUT_PATH = SCRIPT_DIR / "output_videos"         # Output folder
 CONFIG_FILE = SCRIPT_DIR / "WlfCamData.yaml"       # YAML file
 DEFAULT_MODEL_PATH = SCRIPT_DIR / "weights" / "WolfVue_Beta1" / "best.pt"  # YOLO model
 
-# Algorithm parameters (adjust as needed)
-CONFIDENCE_THRESHOLD = 0.25  # Minimum confidence for detections
-DOMINANT_SPECIES_THRESHOLD = 0.7  # Minimum % for dominant species (0.7 = 70%)
+# VIDEO Algorithm parameters (adjust as needed)
+CONFIDENCE_THRESHOLD = 0.40  # Minimum confidence for detections
+DOMINANT_SPECIES_THRESHOLD = 0.9  # Minimum % for dominant species (0.7 = 70%)
 MAX_SPECIES_TRANSITIONS = 5  # Maximum allowed transitions between species
-CONSECUTIVE_EMPTY_FRAMES = 30  # Frames without detection to break a sequence
+CONSECUTIVE_EMPTY_FRAMES = 15  # Frames without detection to break a sequence
+
+# IMAGE Algorithm parameters (adjust as needed for photos)
+IMAGE_CONFIDENCE_THRESHOLD = 0.65  # Minimum confidence for detections in images
+IMAGE_MIN_DETECTIONS = 1  # Minimum number of detections required to classify (set to 1 for any detection)
+IMAGE_MULTI_SPECIES_THRESHOLD = 0.60  # If multiple species detected, confidence difference needed to pick winner
 
 # UI Settings
 PROGRESS_BAR_WIDTH = 50  # Width of the console progress bar
@@ -490,27 +495,45 @@ def count_video_frames(video_path):
         print_warning(f"Could not count frames in {os.path.basename(video_path)}: {e}")
         return 0
 
-def pre_scan_videos(video_files):
+def pre_scan_files(video_files, image_files):
     """Count total frames and estimate processing time."""
-    print_subheader("Pre-scanning videos to estimate processing time...")
+    print_subheader("Pre-scanning files to estimate processing time...")
     
     total_frames = 0
     total_videos = len(video_files)
+    total_images = len(image_files)
+    total_files = total_videos + total_images
     
     if TQDM_AVAILABLE:
+        # Count video frames
         for i, video_file in enumerate(tqdm(video_files, desc="Scanning videos", unit="video")):
             frames = count_video_frames(str(video_file))
             total_frames += frames
+        
+        # Images are 1 frame each
+        total_frames += total_images
+        
     else:
+        # Count video frames
         for i, video_file in enumerate(video_files):
             frames = count_video_frames(str(video_file))
             total_frames += frames
             
             # Update progress
-            progress = (i + 1) / total_videos
-            progress_bar = create_progress_bar(i + 1, total_videos)
+            progress = (i + 1) / total_files if total_files > 0 else 0
+            progress_bar = create_progress_bar(i + 1, total_files)
             clear_current_line()
-            sys.stdout.write(f"\rScanning videos: {progress_bar} ({i+1}/{total_videos})")
+            sys.stdout.write(f"\rScanning files: {progress_bar} ({i+1}/{total_files})")
+            sys.stdout.flush()
+        
+        # Images are 1 frame each
+        total_frames += total_images
+        
+        # Update final progress
+        if total_files > 0:
+            progress_bar = create_progress_bar(total_files, total_files)
+            clear_current_line()
+            sys.stdout.write(f"\rScanning files: {progress_bar} ({total_files}/{total_files})")
             sys.stdout.flush()
     
     print("\n")  # New line after progress bar
@@ -521,6 +544,7 @@ def pre_scan_videos(video_files):
     # Create a nice box for the summary
     summary = [
         f"Total videos: {total_videos}",
+        f"Total images: {total_images}",
         f"Total frames: {total_frames:,}",
         f"Estimated processing time: {format_time(estimate_time_seconds)}"
     ]
@@ -530,6 +554,56 @@ def pre_scan_videos(video_files):
     print(center_text(boxed_summary))
     
     return total_frames
+
+def process_image_with_yolo(image_path, model, class_names):
+    """Process image with YOLO model and return detection data in same format as video frames."""
+    try:
+        # Read the image
+        image = cv2.imread(image_path)
+        if image is None:
+            print_error(f"Error: Could not open image {os.path.basename(image_path)}")
+            return None
+        
+        print_info(f"Processing image: {Colors.BOLD}{os.path.basename(image_path)}{Colors.END}")
+        
+        start_time = time.time()
+        
+        # Run YOLO detection on the image
+        results = model(image)
+        
+        # Extract detections into a structured format
+        detections = []
+        for result in results:
+            boxes = result.boxes
+            for box in boxes:
+                x1, y1, x2, y2 = box.xyxy[0].tolist()
+                conf = box.conf[0].item()
+                cls_id = int(box.cls[0].item())
+                
+                # Use image-specific confidence threshold
+                if conf >= IMAGE_CONFIDENCE_THRESHOLD:
+                    detections.append({
+                        'class_id': cls_id,
+                        'class_name': class_names[cls_id],
+                        'confidence': conf,
+                        'bbox': [x1, y1, x2, y2]
+                    })
+        
+        # Create frame data (single frame for images)
+        frame_data = [{
+            'frame_idx': 0,
+            'timestamp': 0.0,
+            'detections': detections
+        }]
+        
+        processing_time = time.time() - start_time
+        print_success(f"Completed in {format_time(processing_time)}")
+        
+        return frame_data
+        
+    except Exception as e:
+        print_error(f"Error processing image {os.path.basename(image_path)}: {e}")
+        return None
 
 def process_video_with_yolo(video_path, model, class_names, total_processed_frames=0, total_frames=1):
     """Process video with YOLO model and collect frame-by-frame detection data."""
@@ -565,6 +639,7 @@ def process_video_with_yolo(video_path, model, class_names, total_processed_fram
                 conf = box.conf[0].item()
                 cls_id = int(box.cls[0].item())
                 
+                # Use video confidence threshold for videos
                 if conf >= CONFIDENCE_THRESHOLD:
                     detections.append({
                         'class_id': cls_id,
@@ -625,9 +700,16 @@ def analyze_detections(frame_data, class_names):
     """
     Analyze frame detections to determine video classification.
     Implements the sorting algorithm with the specified rules.
+    Uses simplified logic for single-frame images.
     """
-    # Initialize counters and tracking variables
     total_frames = len(frame_data)
+    
+    # Check if this is an image (single frame) and use simplified logic
+    if total_frames == 1:
+        return analyze_image_detections(frame_data[0], class_names)
+    
+    # Original video analysis logic below
+    # Initialize counters and tracking variables
     frames_with_detections = 0
     species_counts = {name: 0 for name in class_names.values()}
     species_frames = {name: [] for name in class_names.values()}
@@ -748,8 +830,6 @@ def analyze_detections(frame_data, class_names):
     else:
         classification = "Unsorted"
         reason = "No clear dominant species"
-
-        
     
     return {
         'total_frames': total_frames,
@@ -760,6 +840,89 @@ def analyze_detections(frame_data, class_names):
         'species_frame_percentages': species_frame_percentages,
         'species_transitions': species_transitions,
         'clusters': sorted_clusters,
+        'classification': classification,
+        'reason': reason
+    }
+
+def analyze_image_detections(frame_data, class_names):
+    """
+    Simplified analysis for single-frame images.
+    Uses image-specific thresholds and logic.
+    """
+    detections = frame_data['detections']
+    
+    # Count detections by species
+    species_counts = {}
+    species_confidences = {}
+    
+    for detection in detections:
+        species = detection['class_name']
+        confidence = detection['confidence']
+        
+        if species not in species_counts:
+            species_counts[species] = 0
+            species_confidences[species] = []
+        
+        species_counts[species] += 1
+        species_confidences[species].append(confidence)
+    
+    # Calculate average confidence per species
+    species_avg_confidence = {}
+    for species, confidences in species_confidences.items():
+        species_avg_confidence[species] = sum(confidences) / len(confidences)
+    
+    # Calculate percentages
+    total_detections = sum(species_counts.values())
+    if total_detections > 0:
+        species_percentages = {
+            species: count / total_detections 
+            for species, count in species_counts.items()
+        }
+    else:
+        species_percentages = {}
+    
+    # Make classification decision for images
+    if total_detections < IMAGE_MIN_DETECTIONS:
+        classification = "No_Animal"
+        reason = f"Insufficient detections (found {total_detections}, need {IMAGE_MIN_DETECTIONS})"
+    elif len(species_counts) == 1:
+        # Single species detected
+        classification = list(species_counts.keys())[0]
+        confidence = species_avg_confidence[classification]
+        reason = f"Single species detected with {confidence:.2f} confidence"
+    elif len(species_counts) > 1:
+        # Multiple species detected - check confidence difference
+        sorted_species = sorted(species_avg_confidence.items(), key=lambda x: x[1], reverse=True)
+        highest_species, highest_conf = sorted_species[0]
+        second_species, second_conf = sorted_species[1]
+        
+        # Check for predator-prey conflict
+        detected_species = list(species_counts.keys())
+        has_predator = any(species in PREDATORS for species in detected_species)
+        has_prey = any(species in PREY for species in detected_species)
+        
+        if has_predator and has_prey:
+            classification = "Unsorted"
+            reason = "Both predator and prey detected in image"
+        elif highest_conf - second_conf >= IMAGE_MULTI_SPECIES_THRESHOLD:
+            classification = highest_species
+            reason = f"Clear winner: {highest_species} ({highest_conf:.2f}) vs {second_species} ({second_conf:.2f})"
+        else:
+            classification = "Unsorted"
+            reason = f"Multiple species with similar confidence: {highest_species} ({highest_conf:.2f}) vs {second_species} ({second_conf:.2f})"
+    else:
+        classification = "No_Animal"
+        reason = "No valid detections found"
+    
+    return {
+        'total_frames': 1,
+        'frames_with_detections': 1 if total_detections > 0 else 0,
+        'detection_rate': 1.0 if total_detections > 0 else 0.0,
+        'species_counts': species_counts,
+        'species_percentages': species_percentages,
+        'species_frame_percentages': species_percentages,  # Same as percentages for single frame
+        'species_transitions': 0,  # N/A for images
+        'clusters': [],  # N/A for images
         'classification': classification,
         'reason': reason
     }
@@ -780,8 +943,8 @@ def get_species_folder_path(base_path, species, taxonomy):
     # If not found in taxonomy, put in unsorted
     return os.path.join(base_path, "Unsorted")
 
-def process_all_videos(video_folder, output_folder, model_path, config):
-    """Process all videos in the folder and sort them."""
+def process_all_files(input_folder, output_folder, model_path, config):
+    """Process all videos and images in the folder and sort them."""
     # Load model
     print_subheader("Loading YOLO model")
     model = load_yolo_model(model_path)
@@ -799,22 +962,34 @@ def process_all_videos(video_folder, output_folder, model_path, config):
     video_extensions = ['.mp4', '.avi', '.mov', '.mkv']
     video_files = []
 
+    # Get all image files - check both upper and lowercase extensions
+    image_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif']
+    image_files = []
+
     # Debug print to see what folder we're checking
-    print_info(f"Looking for videos in: {video_folder}")
+    print_info(f"Looking for files in: {input_folder}")
 
+    # Find video files
     for ext in video_extensions:
-    # Check both lowercase and uppercase
-        video_files.extend(list(Path(video_folder).glob(f'*{ext}')))
-        video_files.extend(list(Path(video_folder).glob(f'*{ext.upper()}')))
+        # Check both lowercase and uppercase
+        video_files.extend(list(Path(input_folder).glob(f'*{ext}')))
+        video_files.extend(list(Path(input_folder).glob(f'*{ext.upper()}')))
 
-# Remove duplicates
+    # Find image files
+    for ext in image_extensions:
+        # Check both lowercase and uppercase
+        image_files.extend(list(Path(input_folder).glob(f'*{ext}')))
+        image_files.extend(list(Path(input_folder).glob(f'*{ext.upper()}')))
+
+    # Remove duplicates
     video_files = list(set(video_files))
+    image_files = list(set(image_files))
 
-# If still no files found, show what's in the folder
-    if not video_files:
-        print_warning("No video files found. Contents of input folder:")
+    # If no files found, show what's in the folder
+    if not video_files and not image_files:
+        print_warning("No video or image files found. Contents of input folder:")
         try:
-            all_files = list(Path(video_folder).glob('*'))
+            all_files = list(Path(input_folder).glob('*'))
             for f in all_files[:10]:  # Show first 10 files
                 print(f"  - {f.name}")
             if len(all_files) > 10:
@@ -822,27 +997,32 @@ def process_all_videos(video_folder, output_folder, model_path, config):
         except Exception as e:
             print_error(f"Could not list directory contents: {e}")
     
-    if not video_files:
-        print_warning("No video files found in the specified folder.")
+    if not video_files and not image_files:
+        print_warning("No video or image files found in the specified folder.")
         return []
     
-    print_success(f"Found {len(video_files)} videos to process")
+    total_files = len(video_files) + len(image_files)
+    print_success(f"Found {len(video_files)} videos and {len(image_files)} images to process ({total_files} total)")
     
-    # Pre-scan videos to get total frame count for overall progress
-    total_frames = pre_scan_videos(video_files)
+    # Pre-scan files to get total frame count for overall progress
+    total_frames = pre_scan_files(video_files, image_files)
     
-    # Process each video
+    # Process each file
     results = []
     total_processed_frames = 0
     start_time = time.time()
     
-    print_fancy_header("PROCESSING VIDEOS")
+    print_fancy_header("PROCESSING FILES")
     
-    for video_index, video_file in enumerate(video_files):
+    file_index = 0
+    
+    # Process videos
+    for video_file in video_files:
         video_path = str(video_file)
+        file_index += 1
         
         # Process video with YOLO
-        print_subheader(f"Processing video {video_index+1} of {len(video_files)}")
+        print_subheader(f"Processing file {file_index} of {total_files} (VIDEO)")
         frame_data = process_video_with_yolo(video_path, model, class_names, 
                                             total_processed_frames, total_frames)
         
@@ -880,7 +1060,7 @@ def process_all_videos(video_folder, output_folder, model_path, config):
                   f"({analysis['frames_with_detections']:,}/{analysis['total_frames']:,} frames)")
         
         # Sort video
-        target_path = sort_video(video_path, classification, output_folder, TAXONOMY)
+        target_path = sort_file(video_path, classification, output_folder, TAXONOMY)
         
         # Store result for summary
         results.append({
@@ -889,16 +1069,76 @@ def process_all_videos(video_folder, output_folder, model_path, config):
             'classification': classification,
             'reason': analysis['reason'],
             'species_percentages': analysis['species_percentages'],
-            'detection_rate': analysis['detection_rate']
+            'detection_rate': analysis['detection_rate'],
+            'file_type': 'video'
         })
         
-        # Print separator between videos
+        # Print separator between files
+        width = get_terminal_width()
+        print(f"{Colors.SUBTLE}{BOX_CHARS['h_line'] * width}{Colors.END}")
+    
+    # Process images
+    for image_file in image_files:
+        image_path = str(image_file)
+        file_index += 1
+        
+        # Process image with YOLO
+        print_subheader(f"Processing file {file_index} of {total_files} (IMAGE)")
+        frame_data = process_image_with_yolo(image_path, model, class_names)
+        
+        if not frame_data:
+            print_error(f"Skipping {os.path.basename(image_path)} due to processing error")
+            continue
+        
+        total_processed_frames += 1  # Images are 1 frame each
+        
+        # Analyze detections
+        print_info("Analyzing detections...")
+        analysis = analyze_detections(frame_data, class_names)
+        classification = analysis['classification']
+        
+        # Display classification result
+        if classification == "No_Animal":
+            result_color = Colors.BLUE
+        elif classification == "Unsorted":
+            result_color = Colors.YELLOW
+        else:
+            result_color = Colors.GREEN
+            
+        print_result(f"Classification: {result_color}{classification}{Colors.END} ({analysis['reason']})")
+        
+        # Show species percentages
+        if analysis['species_percentages']:
+            species_info = []
+            for species, percent in sorted(analysis['species_percentages'].items(), key=lambda x: x[1], reverse=True):
+                if percent > 0:
+                    species_info.append(f"{species}: {percent*100:.1f}%")
+            
+            print_info("Species Detection: " + ", ".join(species_info))
+        
+        print_info(f"Detection rate: {analysis['detection_rate']*100:.1f}% (1 frame)")
+        
+        # Sort image
+        target_path = sort_file(image_path, classification, output_folder, TAXONOMY)
+        
+        # Store result for summary
+        results.append({
+            'original_path': image_path,
+            'target_path': target_path,
+            'classification': classification,
+            'reason': analysis['reason'],
+            'species_percentages': analysis['species_percentages'],
+            'detection_rate': analysis['detection_rate'],
+            'file_type': 'image'
+        })
+        
+        # Print separator between files
         width = get_terminal_width()
         print(f"{Colors.SUBTLE}{BOX_CHARS['h_line'] * width}{Colors.END}")
     
     # Total processing time
     total_time = time.time() - start_time
-    print_success(f"All videos processed in {format_time(total_time)}")
+    print_success(f"All files processed in {format_time(total_time)}")
     print_info(f"Average processing speed: {total_processed_frames/total_time:.1f} frames per second")
     
     # Generate summary report
@@ -915,19 +1155,19 @@ def load_yolo_model(model_path):
         print_error(f"Error loading YOLO model: {e}")
         sys.exit(1)
 
-def sort_video(video_path, classification, base_path, taxonomy):
-    """Move the video to the appropriate folder based on classification."""
+def sort_file(file_path, classification, base_path, taxonomy):
+    """Move the file to the appropriate folder based on classification."""
     target_folder = get_species_folder_path(base_path, classification, taxonomy)
-    video_filename = os.path.basename(video_path)
-    target_path = os.path.join(target_folder, video_filename)
+    file_filename = os.path.basename(file_path)
+    target_path = os.path.join(target_folder, file_filename)
     
     # Create unique filename if target already exists
     if os.path.exists(target_path):
-        name, ext = os.path.splitext(video_filename)
-        target_path = os.path.join(target_folder, f"{name}_{os.path.getmtime(video_path):.0f}{ext}")
+        name, ext = os.path.splitext(file_filename)
+        target_path = os.path.join(target_folder, f"{name}_{os.path.getmtime(file_path):.0f}{ext}")
     
-    print_info(f"Moving video to: {truncate_path(target_path)}")
-    shutil.copy2(video_path, target_path)
+    print_info(f"Moving file to: {truncate_path(target_path)}")
+    shutil.copy2(file_path, target_path)
     return target_path
 
 def generate_summary_report(results, output_folder):
@@ -942,7 +1182,12 @@ def generate_summary_report(results, output_folder):
         f.write("Created by Nathan Bluto\n")
         f.write("Data from The Gray Wolf Research Project\n")
         f.write("Facilitated by Dr. Ausband\n\n")  # Removed asterisks
-        f.write(f"Processed {len(results)} videos\n\n")
+        
+        # Count by file type
+        video_count = sum(1 for r in results if r.get('file_type') == 'video')
+        image_count = sum(1 for r in results if r.get('file_type') == 'image')
+        
+        f.write(f"Processed {len(results)} files ({video_count} videos, {image_count} images)\n\n")
         
         # Count by classification
         classifications = {}
@@ -954,11 +1199,12 @@ def generate_summary_report(results, output_folder):
         
         f.write("Classification Summary:\n")
         for classification, count in sorted(classifications.items()):
-            f.write(f"  {classification}: {count} videos ({count/len(results)*100:.1f}%)\n")
+            f.write(f"  {classification}: {count} files ({count/len(results)*100:.1f}%)\n")
         
         f.write("\nDetailed Results:\n")
         for i, result in enumerate(results, 1):
-            f.write(f"\n{i}. {os.path.basename(result['original_path'])}\n")
+            file_type = result.get('file_type', 'unknown').upper()
+            f.write(f"\n{i}. {os.path.basename(result['original_path'])} ({file_type})\n")
             f.write(f"   Classification: {result['classification']}\n")
             f.write(f"   Reason: {result['reason']}\n")
             f.write(f"   Detection Rate: {result['detection_rate']*100:.1f}%\n")
@@ -969,9 +1215,14 @@ def generate_summary_report(results, output_folder):
     # Print summary to console in a nice box
     print_fancy_header("PROCESSING SUMMARY")
     
+    # Count by file type
+    video_count = sum(1 for r in results if r.get('file_type') == 'video')
+    image_count = sum(1 for r in results if r.get('file_type') == 'image')
+    
     # Create a neat summary box
     summary_lines = [
-        f"Total videos processed: {len(results)}",
+        f"Total files processed: {len(results)}",
+        f"Videos: {video_count}, Images: {image_count}",
         "",
         "Classification Results:"
     ]
@@ -980,7 +1231,7 @@ def generate_summary_report(results, output_folder):
     for classification, count in sorted(classifications.items()):
         percent = count/len(results)*100
         classification_str = classification.ljust(15)
-        summary_lines.append(f"  {classification_str}: {count} videos ({percent:.1f}%)")
+        summary_lines.append(f"  {classification_str}: {count} files ({percent:.1f}%)")
     
     # Create the box and center it as a whole block
     boxed_summary = draw_box('\n'.join(summary_lines), title="Results", style='double')
@@ -1036,10 +1287,10 @@ def main():
     config = load_config(config_path)
     
     # Get input/output paths
-    video_folder = input(f"{Colors.BOLD}Enter the folder path containing videos to process (or press Enter to use default): {Colors.END}").strip()
-    video_folder = clean_path(video_folder)  # Handle quoted paths
-    if not video_folder:
-        video_folder = VIDEO_PATH
+    input_folder = input(f"{Colors.BOLD}Enter the folder path containing videos and images to process (or press Enter to use default): {Colors.END}").strip()
+    input_folder = clean_path(input_folder)  # Handle quoted paths
+    if not input_folder:
+        input_folder = VIDEO_PATH
     
     output_folder = input(f"{Colors.BOLD}Enter the output folder path (or press Enter to use default: {truncate_path(OUTPUT_PATH)}): {Colors.END}").strip()
     output_folder = clean_path(output_folder)  # Handle quoted paths
@@ -1054,7 +1305,7 @@ def main():
     
     # Show settings summary
     settings = [
-        f"Input folder: {truncate_path(video_folder)}",
+        f"Input folder: {truncate_path(input_folder)}",
         f"Output folder: {truncate_path(output_folder)}",
         f"Model path: {truncate_path(model_path)}",
         f"Config file: {truncate_path(config_path)}"
@@ -1065,14 +1316,14 @@ def main():
     print(center_text_block(settings_box))
     
     # Confirm to proceed
-    proceed = input(f"\n{Colors.BOLD}Ready to process videos. Press Enter to continue or Ctrl+C to cancel...{Colors.END}")
+    proceed = input(f"\n{Colors.BOLD}Ready to process videos and images. Press Enter to continue or Ctrl+C to cancel...{Colors.END}")
     
-    # Process videos
-    process_all_videos(video_folder, output_folder, model_path, config)
+    # Process files
+    process_all_files(input_folder, output_folder, model_path, config)
     
     # Final success message with fancy box
     success_message = """
-    All videos have been processed and sorted into their respective folders.
+    All videos and images have been processed and sorted into their respective folders.
     Check the processing_report.txt file for detailed results.
     
     Thank you for using WolfVue: Wildlife Video Classifier!
