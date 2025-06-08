@@ -1,0 +1,17 @@
+path: /lfs/blut2778.ui/ondemand/data/sys/dashboard/batch_connect/sys/bc_desktop/xfce/output/3a6a14c6-6612-4436-99e2-16fd96012599/WolfVueTrain/Unblanced_Wolfvue_Set
+train: /lfs/blut2778.ui/ondemand/data/sys/dashboard/batch_connect/sys/bc_desktop/xfce/output/3a6a14c6-6612-4436-99e2-16fd96012599/WolfVueTrain/Unblanced_Wolfvue_Set/train
+val: /lfs/blut2778.ui/ondemand/data/sys/dashboard/batch_connect/sys/bc_desktop/xfce/output/3a6a14c6-6612-4436-99e2-16fd96012599/WolfVueTrain/Unblanced_Wolfvue_Set/val
+test: /lfs/blut2778.ui/ondemand/data/sys/dashboard/batch_connect/sys/bc_desktop/xfce/output/3a6a14c6-6612-4436-99e2-16fd96012599/WolfVueTrain/Unblanced_Wolfvue_Set/test
+nc: 11
+names:
+  0: WhiteTail
+  1: MuleDeer
+  2: Elk
+  3: Moose
+  4: Cougar
+  5: Wolf
+  6: Coyote
+  7: Fox
+  8: Black Bear
+  9: Rabbit
+  10: Cow

@@ -1,0 +1,6 @@
+*.jpg
+*.avi
+/labels/
+labels/
+/datasets/
+/WolfVueTrain/

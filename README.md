@@ -144,7 +144,7 @@ names:
   8: "Fox"
   9: "Bear"
 ```
-Ideally, this list will expand in the future.
+Ideally, this list will expand in the future. Ity could hace already change, so refer the the actualy YAML file for updated pathing.S
 
 ### About YOLO Model WolfVue_Beta1
 
@@ -168,6 +168,56 @@ If im being completely honest I hardly know what im doing, so someone who does k
 that researchers and hobbiests may be able to utilize in the future.
 
 you can find more details as to the results of this model training in its respective folder.
+
+### About YOLO Model WolfVue_BetaV2
+
+This (Idaho specific) model represents a significant step forward from the original WolfVue_Beta1, expanding from 6 species to 11 different wildlife species. The model was trained on 4,338 images containing 2,625 individual animal annotations across 50 epochs, achieving an mAP50 score of 0.673. In simple terms, this means the model correctly identifies and locates animals about 67% of the time when tested on completely new images it has never seen before.
+
+The dataset follows a standard 70/20/10 split, meaning 70% of the data was used for training the model, 20% for validation during training, and the final 10% was held back exclusively for testing accuracy. This testing portion ensures we get an honest assessment of how well the model performs on truly unseen data.
+
+While the species count has nearly doubled, the dataset still suffers from significant imbalance issues. WhiteTail deer dominate the dataset with 908 annotations representing over a third of all data, while species like Fox and Cougar have only 19 and 18 samples respectively. This creates a balance ratio of 50:1 between the most and least common species, which is far from ideal. The model will naturally be much better at identifying common species like WhiteTail, Elk, and Cow, while struggling with the rare species that lack sufficient training examples.
+
+Despite these limitations, this model can now identify Elk, WhiteTail deer, MuleDeer, Coyote, Cow, Black Bear, Rabbit, Moose, Wolf, Fox, and Cougar. The 67% accuracy represents solid progress, mostly dragged down by the under-represented species, though there's clearly room for improvement, especially for the underrepresented species.
+
+I still cannot share MOST of the raw data due to NDA restrictions with the Gray Wolf Research Project and private property considerations, so open weights remain the best contribution I can make. THis model does have a large portion of open data, largely annotated by me. I would estimate around 1500 ish annotations are made on free data I sourced from IDaho Fish and Game, so if youre interested in using these annotations, feel free to contatc me at natebluto@gmail.com. I would include them here, but adding images to this github repo is a nightmare. 
+
+you can also find most of the public trail-camera data (non annotated) here:
+https://lila.science/datasets/idaho-camera-traps/
+
+📊 SPLIT OVERVIEW:
+Split    Images   Files    Annotations  Percentage
+-------------------------------------------------------
+train    3022     1511     1843         70.2        %
+val      858      429      500          19.0        %
+test     458      229      282          10.7        %
+
+🦌 SPECIES DISTRIBUTION BREAKDOWN:
+================================================================================
+Species              ID  Train     Val       Test      Total    %
+------------------------------------------------------------------------
+WhiteTail            0   634       181       93        908      34.6    %
+Elk                  2   376       79        52        507      19.3    %
+Cow                  10  228       64        32        324      12.3    %
+Wolf                 6   159       50        27        236      9.0     %
+MuleDeer             1   155       50        28        233      8.9     %
+Fox                  8   86        22        14        122      4.6     %
+Black Bear           9   65        18        11        94       3.6     %
+Moose                3   59        15        9         83       3.2     %
+Lynx                 5   56        15        10        81       3.1     %
+Coyote               7   13        3         3         19       0.7     %
+Cougar               4   12        3         3         18       0.7     %
+
+⚖️  DATASET BALANCE ANALYSIS:
+----------------------------------------
+Most common species: 908 annotations
+Least common species: 18 annotations
+Balance ratio: 50.4:1
+
+### note about tool
+
+these tools are mostly self-explanatory and (somewhat) easy to understand/operate when you run them but sometimes they have a fewe quirks ill note here.
+
+for the annotation tool, if youre analysing a new dataset, BE SURE that you load the correct yaml file or else it will say you have annoitations of species you did not make e.g "395 Grizzly Bear annotations" because when you re-do the yaml you assign new number identifiers to the annotations, so you might get confusing resulkts if your yaml doesnt correspond to you balanced dataset.
 
 ### Performance Considerations
 

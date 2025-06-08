@@ -1,0 +1,30 @@
+{
+  "experiment": "aug_low",
+  "model_size": "yolov8s",
+  "batch_size": 16,
+  "img_size": 640,
+  "learning_rate": 0.001,
+  "epochs_completed": 50,
+  "final_mAP50": 0.6733,
+  "final_mAP95": 0.61558,
+  "final_precision": 0.57929,
+  "final_recall": 0.82278,
+  "training_time_minutes": 10.755873886744181,
+  "parameters": {
+    "data": "Unblanced_Wolfvue_Set/dataset.yaml",
+    "epochs": 50,
+    "batch": 16,
+    "imgsz": 640,
+    "lr0": 0.001,
+    "patience": 15,
+    "save_period": 5,
+    "workers": 8,
+    "augment": true,
+    "name": "aug_low",
+    "val": true,
+    "plots": true,
+    "save": true,
+    "cache": true
+  },
+  "status": "SUCCESS"
+}

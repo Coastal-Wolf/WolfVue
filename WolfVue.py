@@ -49,6 +49,11 @@ IMAGE_CONFIDENCE_THRESHOLD = 0.65  # Minimum confidence for detections in images
 IMAGE_MIN_DETECTIONS = 1  # Minimum number of detections required to classify (set to 1 for any detection)
 IMAGE_MULTI_SPECIES_THRESHOLD = 0.60  # If multiple species detected, confidence difference needed to pick winner
 
+# NEW: Image confidence-based unsorted parameters (easily adjustable)
+IMAGE_UNSORTED_MIN_CONFIDENCE = 0.35  # Minimum confidence to trigger unsorted classification
+IMAGE_UNSORTED_MAX_CONFIDENCE = 0.65  # Maximum confidence to trigger unsorted classification
+# NOTE: If confidence is between these values, image goes to "unsorted" folder
+
 # UI Settings
 PROGRESS_BAR_WIDTH = 50  # Width of the console progress bar
 UPDATE_FREQUENCY = 10  # Update the progress bar every N frames
@@ -58,7 +63,7 @@ MAX_PATH_DISPLAY_LENGTH = 60  # Max length to display for paths
 PREDATORS = ["Cougar", "Lynx", "Wolf", "Coyote", "Fox", "Bear"]
 PREY = ["WhiteTail", "MuleDeer", "Elk", "Moose"]
 
-# Simplified taxonomy structure (no redundant subfolders)
+# Simplified taxonomy structure (no redundant subfolders) - NOW LOADED FROM YAML
 TAXONOMY = {
     "Ungulates": {
         "WhiteTail": ["WhiteTail"],
@@ -459,6 +464,16 @@ def load_config(config_file):
     except Exception as e:
         print_error(f"Error loading configuration file: {e}")
         sys.exit(1)
+
+def extract_taxonomy_from_config(config):
+    """Extract taxonomy structure from the YAML config file."""
+    # Try to get taxonomy from config, fall back to default if not found
+    if 'taxonomy' in config:
+        print_success("Using taxonomy from YAML file")
+        return config['taxonomy']
+    else:
+        print_warning("No taxonomy found in YAML file, using default taxonomy")
+        return TAXONOMY
 
 def create_folder_structure(base_path, taxonomy):
     """Create the folder structure based on the taxonomy."""
@@ -881,10 +896,17 @@ def analyze_image_detections(frame_data, class_names):
     else:
         species_percentages = {}
     
+    # NEW: Check for confidence-based unsorted classification
+    max_confidence = max((conf for confs in species_confidences.values() for conf in confs), default=0)
+    confidence_unsorted = (IMAGE_UNSORTED_MIN_CONFIDENCE <= max_confidence <= IMAGE_UNSORTED_MAX_CONFIDENCE)
+    
     # Make classification decision for images
     if total_detections < IMAGE_MIN_DETECTIONS:
         classification = "No_Animal"
         reason = f"Insufficient detections (found {total_detections}, need {IMAGE_MIN_DETECTIONS})"
+    elif confidence_unsorted:
+        classification = "Unsorted"
+        reason = f"Confidence between unsorted range ({max_confidence:.2f} between {IMAGE_UNSORTED_MIN_CONFIDENCE:.2f}-{IMAGE_UNSORTED_MAX_CONFIDENCE:.2f})"
     elif len(species_counts) == 1:
         # Single species detected
         classification = list(species_counts.keys())[0]
@@ -940,8 +962,37 @@ def get_species_folder_path(base_path, species, taxonomy):
         if species in subcategories:
             return os.path.join(base_path, "Sorted", category, species)
     
-    # If not found in taxonomy, put in unsorted
-    return os.path.join(base_path, "Unsorted")
+    # NEW: If not found in taxonomy, create dynamic folder in "Other" category
+    other_category_path = os.path.join(base_path, "Sorted", "Other", species)
+    
+    # Create the "Other" category and species folder if they don't exist
+    os.makedirs(other_category_path, exist_ok=True)
+    
+    return other_category_path
+
+def create_folder_structure(base_path, taxonomy):
+    """Create the folder structure based on the taxonomy."""
+    print_subheader(f"Creating folder structure in {truncate_path(base_path)}")
+    
+    # Create base directories
+    os.makedirs(os.path.join(base_path, "Sorted"), exist_ok=True)
+    os.makedirs(os.path.join(base_path, "Unsorted"), exist_ok=True)
+    os.makedirs(os.path.join(base_path, "No_Animal"), exist_ok=True)  # No animal detections
+    
+    # Create taxonomy-based directories (simplified, no redundant subfolders)
+    for category, subcategories in taxonomy.items():
+        category_path = os.path.join(base_path, "Sorted", category)
+        os.makedirs(category_path, exist_ok=True)
+        
+        for species, _ in subcategories.items():
+            species_path = os.path.join(category_path, species)
+            os.makedirs(species_path, exist_ok=True)
+    
+    # NEW: Create "Other" category for dynamic species
+    other_category_path = os.path.join(base_path, "Sorted", "Other")
+    os.makedirs(other_category_path, exist_ok=True)
+    
+    print_success("Folder structure created successfully")
 
 def process_all_files(input_folder, output_folder, model_path, config):
     """Process all videos and images in the folder and sort them."""
@@ -954,8 +1005,11 @@ def process_all_files(input_folder, output_folder, model_path, config):
     class_names = config.get('names', {})
     print_info(f"Loaded {len(class_names)} species classifications")
     
+    # Extract taxonomy from config
+    taxonomy = extract_taxonomy_from_config(config)
+    
     # Create folder structure
-    create_folder_structure(output_folder, TAXONOMY)
+    create_folder_structure(output_folder, taxonomy)
     
     
     # Get all video files - check both upper and lowercase extensions
@@ -1060,7 +1114,7 @@ def process_all_files(input_folder, output_folder, model_path, config):
                   f"({analysis['frames_with_detections']:,}/{analysis['total_frames']:,} frames)")
         
         # Sort video
-        target_path = sort_file(video_path, classification, output_folder, TAXONOMY)
+        target_path = sort_file(video_path, classification, output_folder, taxonomy)
         
         # Store result for summary
         results.append({
@@ -1119,7 +1173,7 @@ def process_all_files(input_folder, output_folder, model_path, config):
         print_info(f"Detection rate: {analysis['detection_rate']*100:.1f}% (1 frame)")
         
         # Sort image
-        target_path = sort_file(image_path, classification, output_folder, TAXONOMY)
+        target_path = sort_file(image_path, classification, output_folder, taxonomy)
         
         # Store result for summary
         results.append({
