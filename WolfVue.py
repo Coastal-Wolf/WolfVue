@@ -35,8 +35,8 @@ SCRIPT_DIR = Path(__file__).parent
 # Define paths relative to the script directory
 VIDEO_PATH = SCRIPT_DIR / "input_videos"           # Input videos
 OUTPUT_PATH = SCRIPT_DIR / "output_videos"         # Output folder  
-CONFIG_FILE = SCRIPT_DIR / "WlfCamData.yaml"       # YAML file
-DEFAULT_MODEL_PATH = SCRIPT_DIR / "weights" / "WolfVue_Beta1" / "best.pt"  # YOLO model
+CONFIG_FILE = SCRIPT_DIR / "weights" / "Misc_Models" / "WolfVue_BetaV2" / "WolfVue_BetaV2.yaml"       # YAML file
+DEFAULT_MODEL_PATH = SCRIPT_DIR / "weights" / "Misc_Models" / "WolfVue_BetaV2" / "aug_low_best.pt"  # YOLO model
 
 # VIDEO Algorithm parameters (adjust as needed)
 CONFIDENCE_THRESHOLD = 0.40  # Minimum confidence for detections
