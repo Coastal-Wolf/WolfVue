@@ -1,0 +1,7 @@
+services:
+  wolfvue:
+    build: .
+    stdin_open: true # Enables stdin for user input
+    tty: true        # Allocates a pseudo-TTY for interactive processes
+    volumes:
+      - .:/root/app
