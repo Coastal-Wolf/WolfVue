@@ -1,8 +1,63 @@
+```
+██╗    ██╗ ██████╗ ██╗     ███████╗██╗   ██╗██╗   ██╗███████╗
+██║    ██║██╔═══██╗██║     ██╔════╝██║   ██║██║   ██║██╔════╝
+██║ █╗ ██║██║   ██║██║     █████╗  ██║   ██║██║   ██║█████╗  
+██║███╗██║██║   ██║██║     ██╔══╝  ╚██╗ ██╔╝██║   ██║██╔══╝  
+╚███╔███╔╝╚██████╔╝███████╗██║      ╚████╔╝ ╚██████╔╝███████╗
+ ╚══╝╚══╝  ╚═════╝ ╚══════╝╚═╝       ╚═══╝   ╚═════╝ ╚══════╝
+ ```
 # WolfVue: Wildlife Video Classifier
 
 A tool for automatically classifying trail camera photos and videos by species using YOLO object detection, originally developed for The Gray Wolf Research Project. This project's main priority is for Idaho species commonly found on trailcams.
 
+### The 4-Tool Pipeline (run in this order)
 
+| Tool             | What it does                                            | One command                     |
+|------------------|---------------------------------------------------------|---------------------------------|
+| **AnnotationTool** | Smart resume annotation + auto-rename by species      | `python tools/annotationtool.py` |
+| **WolfRank**       | Finds the folders with the most wolves in seconds      | `python tools/wolf_rank.py`     |
+| **WolfForge**      | Trains a custom YOLO wolf detector                     | `python tools/wolf_forge.py`    |
+| **WolfVue**        | Real-time inference + video sorting (main app)         | `python WolfVue.py`             |
+
+All tools share the same `WlfCamData.yaml` - zero configuration hell.
+
+---
+
+### Quick Start (literally 3 commands)
+
+```
+# 1. Clone + install
+git clone https://github.com/ParadigmPacket/WolfVue.git
+cd WolfVue
+pip install ultralytics opencv-python colorama tqdm pyyaml
+
+# 2. Annotate (resume from last image!)
+python tools/annotationtool.py
+
+# 3. Find the best wolf folders across 100 directories
+python tools/wolf_rank.py
+
+# 4. Train your own wolf detector
+python tools/wolf_forge.py --epochs 100
+
+# 5. Sort videos with the trained model
+python WolfVue.py
+```
+
+That's it. No Roboflow. No paid APIs.
+
+---
+
+### Features That Actually Matter in the Field
+
+- Resume annotation from exact last image (no re-labeling 8,000 photos)
+- Smart filename renaming using existing YOLO labels
+- Automatic GPU batch sizing & early stopping
+- ONNX/TensorRT export for edge devices (Raspberry Pi, Jetson, trail-cam PCs)
+- Live TensorBoard + beautiful terminal UI
+- Works offline in the Idaho backcountry
+
+---
 ## Quick Start
 
 ### Prerequisites
