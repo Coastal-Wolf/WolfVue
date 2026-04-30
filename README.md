@@ -6,7 +6,7 @@ A tool for automatically classifying trail camera photos and videos by species u
 
 ### Prerequisites
 
-Python 3.8 or higher installed on your system. For MacOS ultralytics requires <= 3.11
+Python 3.8 or higher installed on your system. For MacOS the maximum compatible version is 3.11
 
 ## Download & Setup
 
@@ -42,15 +42,23 @@ Python 3.8 or higher installed on your system. For MacOS ultralytics requires <=
 
 ### Installing on MacOS
 
-1. Install Python <= 3.11 (preferably using [home-brew](https://brew.sh/))
-   ```brew install python@3.11```
+1. Install Python 3.11 (preferably using [home-brew](https://brew.sh/))
+   ```
+   brew install python@3.11
+   ```
 2. navigate to your WolfVue folder
 3. create a virtual environment using Python 3.11
-   ```/opt/homebrew/bin/python3.11 -m venv .venv```
+   ```
+   /opt/homebrew/bin/python3.11 -m venv .venv
+   ```
 4. start those engines!
-   ```source .venv/bin/activate```
+   ```
+   source .venv/bin/activate
+   ```
 5. Install packages
-   ```py -m pip install -r requirements.txt```
+   ```
+   py -m pip install -r requirements.txt
+   ```
 
 ## Using WolfVue
 
