@@ -2,62 +2,95 @@
 
 A tool for automatically classifying trail camera photos and videos by species using YOLO object detection, originally developed for The Gray Wolf Research Project. This project's main priority is for Idaho species commonly found on trailcams.
 
-
 ## Quick Start
 
 ### Prerequisites
 
-Python 3.8 or higher installed on your system.
+Python 3.8 or higher installed on your system. For MacOS the maximum compatible version is 3.11
 
 ## Download & Setup
 
-**Step 1: Download WolfVue**
-1. Click the green "Code" button at the top of this GitHub page
-2. Select "Download ZIP"
-3. Extract the ZIP file to your Desktop or Documents folder
-4. Open the extracted folder - it should contain `wolfvue.py`, `best.pt`, and folders named `input_videos/` and `output_videos/`
+### Download WolfVue
 
-**Step 2: Install Python**
+1. Either click the green "Code" button at the top of this GitHub page and Download ZIP, or simply clone the repo.
+2. If you downloaded ZIP, extract the ZIP file to your Desktop or Documents folder
+3. Open the extracted/cloned folder - it should contain `wolfvue.py`, `best.pt`, and folders named `input_videos/` and `output_videos/`
+
+### Installing on Windows
+
+#### Install Python
+
 1. Download Python 3.8+ from [python.org](https://python.org)
 2. During installation, CHECK "Add Python to PATH" (important!)
 3. Restart your computer
 
-**Step 3: Install Required Packages**
-1. Open Command Prompt (Windows) or Terminal (Mac/Linux)
+#### Install Required Packages
+
+1. Open Command Prompt
 2. Navigate to your WolfVue folder:
+
    ```
    cd Desktop/WolfVue
    ```
+
 3. Install packages:
+
    ```
    py -m pip install -r requirements.txt
 
    ```
 
+### Installing on MacOS
+
+1. Install Python 3.11 (preferably using [home-brew](https://brew.sh/))
+   ```
+   brew install python@3.11
+   ```
+2. navigate to your WolfVue folder
+3. create a virtual environment using Python 3.11
+   ```
+   /opt/homebrew/bin/python3.11 -m venv .venv
+   ```
+4. start those engines!
+   ```
+   source .venv/bin/activate
+   ```
+5. Install packages
+   ```
+   py -m pip install -r requirements.txt
+   ```
+
 ## Using WolfVue
 
-**Step 4: Add Your Videos and Photos**
-- Copy your trail camera videos into the `input_videos/` folder
+### Step 4: Add Your Videos and Photos
+
+- Copy your trail camera videos into the `input_videos/` folder (you may need to create this yourself)
 - Supported formats: .mp4, .avi, .mov, .mkv and most photo types.
 
-**Step 5: Run the Script**
-1. Open Command Prompt/Terminal and navigate to your WolfVue folder
+### Step 5: Run the Script
+
+1. For Windows, open Command Prompt and navigate to your WolfVue folder. For MacOS you will need to ensure you are inside the virtual environment you created earlier.
 2. Run:
+
    ```
    python WolfVue.py
    ```
+
    if this doesnt work, try clicking on the WolfVue folder, and then click "copy filepath". Then modify the original prompt.
 
   Example:
+
   ```
   python "C:\Users\Coastal_wolf\Desktop\WolfVue\WolfVue.py"
   ```
 
-3. Press Enter for each prompt (unless you want to change file paths)
-4. Wait for processing to complete - you'll see lots of scrolling text showing frame detection
+1. Press Enter for each prompt (unless you want to change file paths)
+2. Wait for processing to complete - you'll see lots of scrolling text showing frame detection
 
-**Step 6: Check Results**
+### Step 6: Check Results
+
 Find your sorted videos in:
+
 - `output_videos/Sorted/` - organized by species
 - `output_videos/Unsorted/` - mixed species or unclear
 - `output_videos/No_Animal/` - no animals detected
@@ -66,24 +99,30 @@ Find your sorted videos in:
 ## Troubleshooting
 
 **"Python is not recognized"**
+
 - Reinstall Python and check "Add Python to PATH"
 - Restart your computer
 
 **"No module named 'ultralytics'"**
+
 - Make sure you ran the pip install command in the correct WolfVue folder
 
 **"No videos found"**
+
 - Check that videos are in the `input_videos/` folder with supported file extensions
 
 **Script crashes**
+
 - Ensure `best.pt` and `WlfCamData.yaml` are in your WolfVue folder
 
 ## Tips
+
 - Test with 1-2 videos first
 - Processing time varies by computer speed and video length
 - Check the processing report for detailed explanations
 - Yaml files for each model are often found paired with the .pt file in the weight's folder.
 Need help? Open an issue on GitHub with your error message and operating system.
+
 ## How It Works
 
 WolfVue processes trail camera footage frame by frame, detecting animals using a trained YOLO model. It then analyzes the temporal patterns of detections to classify each video into one of three categories:
@@ -102,7 +141,9 @@ DOMINANT_SPECIES_THRESHOLD = 0.7     # Required percentage for dominant species
 MAX_SPECIES_TRANSITIONS = 5          # Maximum allowed species changes
 CONSECUTIVE_EMPTY_FRAMES = 30        # Empty frames to break a detection sequence
 ```
+
 NOTE: this only adjusts the sorting algoritm based on frame detection BY the yolo model, but does not effect the YOLO model itself.
+
 ## Advanced Usage
 
 ### Understanding the Classification Algorithm
@@ -117,6 +158,7 @@ The classifier uses a multi-factor approach to determine video categories:
 ### Classification Rules
 
 A video is classified as a specific species only if:
+
 - That species represents >70% of all detections
 - Species transitions are below the threshold
 - No predator-prey conflicts exist (e.g., wolf and deer in same video)
@@ -140,6 +182,7 @@ names:
   8: "Fox"
   9: "Bear"
 ```
+
 Ideally, this list will expand in the future. It could have already changed, so refer the the actualy YAML file for updated pathing.
 
 ### About YOLO Model WolfVue_Beta1
@@ -155,9 +198,9 @@ Wolf: 27 instances
 
 this means its only actually able to identify 6 different species, is unbalanced, and highly skewed towards Elk because they make up so much of the dataset.
 
-This is NOT a good model, but its a start. 
+This is NOT a good model, but its a start.
 
-I cannot share the data, as its restricted by the Gray Wolf Research Project, so open weight is the best I can do. 
+I cannot share the data, as its restricted by the Gray Wolf Research Project, so open weight is the best I can do.
 
 The goal of open sourcing this is to hopefully get some more trail cam videos that can be fine tuned for more species, more accurately, and maybe more efficiently.
 If im being completely honest I hardly know what im doing, so someone who does know what theyre doing might be able to take this to the next level, and make a good model
@@ -175,10 +218,10 @@ While the species count has nearly doubled, the dataset still suffers from signi
 
 Despite these limitations, this model can now identify Elk, WhiteTail deer, MuleDeer, Coyote, Cow, Black Bear, Rabbit, Moose, Wolf, Fox, and Cougar. The 67% accuracy represents solid progress, mostly dragged down by the under-represented species, though there's clearly room for improvement, especially for the underrepresented species.
 
-I still cannot share MOST of the raw data due to restrictions with the Gray Wolf Research Project, so open weights remain the best contribution I can make. THis model does have a large portion of open data, largely annotated by me. I would estimate around 1500 ish annotations are made on free data I sourced from Idaho Fish and Game, so if youre interested in using these annotations, feel free to contact me at natebluto@gmail.com. I would include them here, but adding images to this github repo is a nightmare. 
+I still cannot share MOST of the raw data due to restrictions with the Gray Wolf Research Project, so open weights remain the best contribution I can make. THis model does have a large portion of open data, largely annotated by me. I would estimate around 1500 ish annotations are made on free data I sourced from Idaho Fish and Game, so if youre interested in using these annotations, feel free to contact me at <natebluto@gmail.com>. I would include them here, but adding images to this github repo is a nightmare.
 
-you can also find most of the public trail-camera data (non annotated) here: https://lila.science/datasets/idaho-camera-traps/
- 
+you can also find most of the public trail-camera data (non annotated) here: <https://lila.science/datasets/idaho-camera-traps/>
+
 SPLIT OVERVIEW:
 Split    Images   Files    Annotations  Percentage
 
@@ -209,7 +252,7 @@ Balance ratio: 50.4:1
 
 ### about YOLO model WolfVue_LimitedV2
 
-This model is more stable and accurate than any of my previous models, but more limited than WolfVue_Beta_BroadV2 in the number of species it can identify. Instead of having a large dataset with unbalanced training data, I focused on species that had 100+ annotations for stability. Each of the following species contained 133-250 annotations in the dataset across 6 common species, leading to a balanced model with little bias. 
+This model is more stable and accurate than any of my previous models, but more limited than WolfVue_Beta_BroadV2 in the number of species it can identify. Instead of having a large dataset with unbalanced training data, I focused on species that had 100+ annotations for stability. Each of the following species contained 133-250 annotations in the dataset across 6 common species, leading to a balanced model with little bias.
 
 Species in model:
 
@@ -220,14 +263,13 @@ Cow
 Black Bear
 Mule Deer
 
-
 During training, this model achieved a 97.14% mAP50 score (accuracy).
 
 Doing some real world testing, I picked a trail camera from Idaho Fish and Game with unseen data at random.
 
-Loc_205 (avalible at https://lila.science/datasets/idaho-camera-traps/), contained mostly Elk. Testing on this real world dataset;
+Loc_205 (avalible at <https://lila.science/datasets/idaho-camera-traps/>), contained mostly Elk. Testing on this real world dataset;
 
-it correctly identified 92.95% (488 out of 525) of all species in the "sorted" folder output. 
+it correctly identified 92.95% (488 out of 525) of all species in the "sorted" folder output.
 It correctly identified No_animal  97.91% of the time (329 out of 329)
 It correctly sorted 90.93% (471 out of 518) of animals into the "Sorted" output folder
 
@@ -244,11 +286,13 @@ for the annotation tool, if youre analyzing a new dataset, BE SURE that you load
 ### Performance Considerations
 
 Processing speed depends on:
+
 - Video resolution (higher resolution = slower)
 - Model complexity (YOLOv8n is fastest, YOLOv8x is most accurate)
 - Hardware (GPU acceleration dramatically improves speed)
 
 For GPU acceleration, ensure you have CUDA-enabled PyTorch:
+
 ```bash
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 ```
@@ -256,6 +300,7 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 ### Batch Processing
 
 The script automatically processes all videos in the input folder. For large datasets:
+
 - The pre-scan estimates total processing time
 - Progress bars show both per-video and overall progress
 - A processing report is generated with detailed results
@@ -299,6 +344,7 @@ TAXONOMY = {
 ### Processing Report
 
 After processing, check `processing_report.txt` for:
+
 - Classification summary statistics
 - Per-video classification details
 - Detection rates and species percentages
@@ -319,6 +365,7 @@ After processing, check `processing_report.txt` for:
 ### Frame-by-Frame Analysis
 
 Each frame undergoes:
+
 1. YOLO inference to detect bounding boxes
 2. Confidence filtering
 3. Species identification mapping
@@ -327,6 +374,7 @@ Each frame undergoes:
 ### Temporal Consistency
 
 The algorithm maintains temporal consistency by:
+
 - Tracking species across consecutive frames
 - Identifying detection clusters
 - Penalizing frequent species transitions
@@ -335,6 +383,7 @@ The algorithm maintains temporal consistency by:
 ### Edge Cases
 
 The classifier handles several edge cases:
+
 - Brief appearances by secondary species are ignored if under threshold
 - Predator-prey scenarios always result in "Unsorted" classification
 - Videos with sparse, intermittent detections are evaluated based on total pattern
@@ -346,7 +395,7 @@ Able to achieve this without Claude, that said, developers will probably encount
 
 At first I was conflicted about using AI to code, but ultimately, the means that this is done does not matter so long as the end project benefits scientists. researchers, and hobbiests free of charge as intended.
 
-Also note that I would like this project to be specifically for Trail cameras, so please make sure any data that is fine tuned is done with data FROM trail cameras. 
+Also note that I would like this project to be specifically for Trail cameras, so please make sure any data that is fine tuned is done with data FROM trail cameras.
 
 Thank you for reading, and possibly using this. I think this could make for a great open source project!
 
@@ -354,18 +403,19 @@ Thank you for reading, and possibly using this. I think this could make for a gr
 
 1. First and foremost, we need to improve the yolo model. Its pretty clear thats the main issue to be worked on.
 
-I think focusing on large and common mammals from North America is important. I think we should catogorize things like birds broadly, as it would be a nightmare to try to identify 
+I think focusing on large and common mammals from North America is important. I think we should catogorize things like birds broadly, as it would be a nightmare to try to identify
 each species, same with waterfowl. I think we should limit our scope to maybe 20 species at most for now if we get that many. We'll burn that bridge when we get to it i suppose. (also add more models which can be changed between within the program like a liberary)
 
-2. Implement support for images.
+1. Implement support for images.
 
 Im already doing things frame by frame, this should be a no-brainer. It also should be incredibly easy. I just need to make the script recognize when images are input and sort those in the same way.
 
-3. Add documentation for fine-tuning YOLO models
+1. Add documentation for fine-tuning YOLO models
 
 I will do this once ive re-learned how to do this myself
 
-4. 
+1.
+
 potentially underwater?
 
 ## Potential feature ideas
@@ -376,7 +426,7 @@ potentially underwater?
 
 ## Training new models
 
-VERY valuable resource for idaho trail cameras: https://lila.science/datasets/idaho-camera-traps/
+VERY valuable resource for idaho trail cameras: <https://lila.science/datasets/idaho-camera-traps/>
 
 ## Contributing
 
@@ -543,7 +593,7 @@ Source.
   The Corresponding Source for a work in source code form is that
 same work.
 
-  2. Basic Permissions.
+  1. Basic Permissions.
 
   All rights granted under this License are granted for the term of
 copyright on the Program, and are irrevocable provided the stated
@@ -568,7 +618,7 @@ your copyrighted material outside their relationship with you.
 the conditions stated below.  Sublicensing is not allowed; section 10
 makes it unnecessary.
 
-  3. Protecting Users' Legal Rights From Anti-Circumvention Law.
+  1. Protecting Users' Legal Rights From Anti-Circumvention Law.
 
   No covered work shall be deemed part of an effective technological
 measure under any applicable law fulfilling obligations under article
@@ -584,7 +634,7 @@ modification of the work as a means of enforcing, against the work's
 users, your or third parties' legal rights to forbid circumvention of
 technological measures.
 
-  4. Conveying Verbatim Copies.
+  1. Conveying Verbatim Copies.
 
   You may convey verbatim copies of the Program's source code as you
 receive it, in any medium, provided that you conspicuously and
@@ -597,7 +647,7 @@ recipients a copy of this License along with the Program.
   You may charge any price or no price for each copy that you convey,
 and you may offer support or warranty protection for a fee.
 
-  5. Conveying Modified Source Versions.
+  1. Conveying Modified Source Versions.
 
   You may convey a work based on the Program, or the modifications to
 produce it from the Program, in the form of source code under the
@@ -634,7 +684,7 @@ beyond what the individual works permit.  Inclusion of a covered work
 in an aggregate does not cause this License to apply to the other
 parts of the aggregate.
 
-  6. Conveying Non-Source Forms.
+  1. Conveying Non-Source Forms.
 
   You may convey a covered work in object code form under the terms
 of sections 4 and 5, provided that you also convey the
@@ -732,7 +782,7 @@ documented (and with an implementation available to the public in
 source code form), and must require no special password or key for
 unpacking, reading or copying.
 
-  7. Additional Terms.
+  1. Additional Terms.
 
   "Additional permissions" are terms that supplement the terms of this
 License by making exceptions from one or more of its conditions.
@@ -796,7 +846,7 @@ where to find the applicable terms.
 form of a separately written license, or stated as exceptions;
 the above requirements apply either way.
 
-  8. Termination.
+  1. Termination.
 
   You may not propagate or modify a covered work except as expressly
 provided under this License.  Any attempt otherwise to propagate or
@@ -824,7 +874,7 @@ this License.  If your rights have been terminated and not permanently
 reinstated, you do not qualify to receive new licenses for the same
 material under section 10.
 
-  9. Acceptance Not Required for Having Copies.
+  1. Acceptance Not Required for Having Copies.
 
   You are not required to accept this License in order to receive or
 run a copy of the Program.  Ancillary propagation of a covered work
@@ -835,7 +885,7 @@ modify any covered work.  These actions infringe copyright if you do
 not accept this License.  Therefore, by modifying or propagating a
 covered work, you indicate your acceptance of this License to do so.
 
-  10. Automatic Licensing of Downstream Recipients.
+  1. Automatic Licensing of Downstream Recipients.
 
   Each time you convey a covered work, the recipient automatically
 receives a license from the original licensors, to run, modify and
@@ -860,7 +910,7 @@ rights granted under this License, and you may not initiate litigation
 any patent claim is infringed by making, using, selling, offering for
 sale, or importing the Program or any portion of it.
 
-  11. Patents.
+  1. Patents.
 
   A "contributor" is a copyright holder who authorizes use under this
 License of the Program or a work on which the Program is based.  The
@@ -929,7 +979,7 @@ or that patent license was granted, prior to 28 March 2007.
 any implied license or other defenses to infringement that may
 otherwise be available to you under applicable patent law.
 
-  12. No Surrender of Others' Freedom.
+  1. No Surrender of Others' Freedom.
 
   If conditions are imposed on you (whether by court order, agreement or
 otherwise) that contradict the conditions of this License, they do not
@@ -941,7 +991,7 @@ to collect a royalty for further conveying from those to whom you convey
 the Program, the only way you could satisfy both those terms and this
 License would be to refrain entirely from conveying the Program.
 
-  13. Use with the GNU Affero General Public License.
+  1. Use with the GNU Affero General Public License.
 
   Notwithstanding any other provision of this License, you have
 permission to link or combine any covered work with a work licensed
@@ -952,7 +1002,7 @@ but the special requirements of the GNU Affero General Public License,
 section 13, concerning interaction through a network will apply to the
 combination as such.
 
-  14. Revised Versions of this License.
+  1. Revised Versions of this License.
 
   The Free Software Foundation may publish revised and/or new versions of
 the GNU General Public License from time to time.  Such new versions will
@@ -978,7 +1028,7 @@ permissions.  However, no additional obligations are imposed on any
 author or copyright holder as a result of your choosing to follow a
 later version.
 
-  15. Disclaimer of Warranty.
+  1. Disclaimer of Warranty.
 
   THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
 APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
@@ -989,7 +1039,7 @@ PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM
 IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
 ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
 
-  16. Limitation of Liability.
+  1. Limitation of Liability.
 
   IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
 WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS
@@ -1001,7 +1051,7 @@ PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),
 EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGES.
 
-  17. Interpretation of Sections 15 and 16.
+  1. Interpretation of Sections 15 and 16.
 
   If the disclaimer of warranty and limitation of liability provided
 above cannot be given local legal effect according to their terms,
@@ -1049,7 +1099,7 @@ notice like this when it starts in an interactive mode:
     This is free software, and you are welcome to redistribute it
     under certain conditions; type `show c' for details.
 
-The hypothetical commands `show w' and `show c' should show the appropriate
+The hypothetical commands `show w' and`show c' should show the appropriate
 parts of the General Public License.  Of course, your program's commands
 might be different; for a GUI interface, you would use an "about box".
 
@@ -1064,4 +1114,3 @@ may consider it more useful to permit linking proprietary applications with
 the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <https://www.gnu.org/licenses/why-not-lgpl.html>.
-

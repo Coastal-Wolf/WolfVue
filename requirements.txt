@@ -1,4 +1,4 @@
-PyYAML~=6.0.2
-tqdm~=4.67.1
-opencv-python~=4.12.0.88
-ultralytics~=8.3.200
+PyYAML~=6.0.3
+tqdm~=4.67.3
+opencv-python~=4.13.0.92
+ultralytics~=8.4.56
